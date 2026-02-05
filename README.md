@@ -1,23 +1,21 @@
-# Locus Dispersion, Chromosome Painting, and Selection Analysis Pipelines
+# Propagation of Processed Pseudogene Annotation in the T2T Era
 
-This repository contains Python scripts used for block-based locus dispersion quantification, chromosome painting visualization, and codon-level selection result visualization across multiple primate species. All analyses are designed to be transparent, reproducible, and explicitly separated from external (non-Python) tools.
+Code repository accompanying the paper:
+
+Boundary-associated propagation of a processed pseudogene dissects pre-existing limitations of genome annotation in the T2T era  
+Published in Mobile DNA (2026)
 
 ---
 
 ## Overview
 
-This repository provides three independent but complementary analysis components:
+This repository provides all Python scripts used to reproduce the computational analyses and figures presented in the Mobile DNA (2026) paper:
 
-1. Block-based locus dispersion analysis  
-   Quantifies how a defined human genomic locus is dispersed across query genomes using UCSC chain/net block data.
+Boundary-associated propagation of a processed pseudogene dissects pre-existing limitations of genome annotation in the T2T era.
 
-2. Chromosome painting visualization  
-   Visualizes how a focal locus maps onto multiple chromosomes or contigs in query species, including cases with haplotypes or patch assemblies.
+The study investigates how a processed pseudogene locus propagates in association with chromosomal boundaries in the telomere-to-telomere (T2T) genome era, and how such propagation exposes pre-existing limitations in genome annotation frameworks.
 
-3. Codon-level selection visualization (FEL / MEME)  
-   Visualizes purifying and episodic diversifying selection sites inferred externally using Datamonkey (HyPhy), mapped onto codon or CDS coordinates.
-
-External steps such as codon-based alignment and selection inference are explicitly separated from Python-based visualization.
+The repository focuses exclusively on reproducible, block-based, and projection-aware analyses. All external inference steps (e.g., selection tests) are explicitly separated from in-repository visualization and quantification.
 
 ---
 
@@ -25,8 +23,7 @@ External steps such as codon-based alignment and selection inference are explici
 
 blocks_locus_dispersion.py  
 blocks_chr_painting.py  
-selection_sites_FEL_MEME.py  
-Figure_SEPTIN14_gapmasked_FEL_MEME.py  
+gapmasked_alignment_fel_meme_plot.py  
 requirements.txt  
 README.md  
 
@@ -36,44 +33,41 @@ README.md
 
 Script: blocks_locus_dispersion.py
 
-This script quantifies how a defined target locus in the reference genome (t) is distributed across query genomes (q) using UCSC Table Browser chain/net block exports.
+This script quantifies how a defined focal locus in the reference genome is distributed across query genomes using UCSC chain/net block projections.
 
-Metrics include:
-- Number of distinct query chromosomes or contigs (dispersion_qnames)
-- Total aligned length in query genomes
-- Strand conflicts between plus and minus blocks
-- Duplication / dispersion index
+The analysis is performed in a genome-wide, projection-based framework and does not assume true insertion events. All results are interpreted strictly as projected block mappings.
 
-Input files are UCSC Table Browser exports (.txt), placed in the same directory. Header and no-header formats are both supported.
+### Inputs
+
+UCSC Table Browser chain/net block exports (.txt), one file per query species.
 
 Expected columns:
 chrom, chromStart, chromEnd, strand, qName, qSize, qStart, qEnd
 
-Example input files:
-chimpanzee.txt  
-pygmy chimpanzee.txt  
-western lowland gorilla.txt  
-Bornean orangutan.txt  
-Sumatran orangutan.txt  
-siamang.txt  
-slow loris.txt  
-Ring-tailed lemur.txt  
-white-tufted-ear marmoset.txt  
+Both header and no-header formats are supported.
 
-The target locus is defined directly in the script:
+### Target locus definition
+
+The focal locus is defined directly in the script, for example:
 
 TARGET_TNAME  = chr7  
 TARGET_TSTART = 55953761  
 TARGET_TEND   = 55959097  
 
-Outputs:
+### Outputs
+
 all_species_locus_by_qname.tsv  
 all_species_locus_species.tsv  
 
-Key metrics:
-dupIndex = total_hit_bp / window_len_bp  
-mix_fraction = overlap(+,-)_bp / hit_bp  
-conflict_fraction = overlap(+,-)_bp / union(+,-)_bp  
+### Reported metrics
+
+- dispersion_qnames: number of distinct query chromosomes or contigs
+- total_hit_bp: cumulative projected block length
+- dupIndex: total_hit_bp / window_len_bp
+- mix_fraction: overlap between plus/minus strand blocks
+- conflict_fraction: strand conflict normalized by union length
+
+These metrics are used to quantify locus dispersion and structural amplification without asserting functional or insertional causality.
 
 ---
 
@@ -81,15 +75,20 @@ conflict_fraction = overlap(+,-)_bp / union(+,-)_bp
 
 Script: blocks_chr_painting.py
 
-This script produces chromosome painting plots showing how blocks derived from a focal human locus are distributed across chromosomes or contigs in each query species.
+This script generates chromosome painting plots showing how blocks derived from a focal human locus are distributed across chromosomes or contigs in each query species.
 
-The script automatically handles cases where chromosome labels (e.g., chr7) are duplicated across haplotypes or patch assemblies (e.g., hap1 / hap2) by switching internally to a chromosome-label keyspace, ensuring that plots are generated robustly without label collisions.
+The script robustly handles assemblies containing haplotypes or patch sequences. When chromosome labels (e.g., chr7) are duplicated across haplotypes (e.g., hap1 / hap2), the script automatically switches to an internal chromosome-label keyspace to prevent name collisions and ensure successful plotting.
 
-Inputs:
-- UCSC block files (same as above)
+### Inputs
+
+- UCSC chain/net block files (same as above)
 - Chromosome size tables downloaded from NCBI Datasets
 
-Gene coordinates are manually curated from the NCBI Genome Browser for each species and assembly and defined explicitly inside the script.
+Chromosome size tables contain chromosome (or contig) names and lengths.
+
+### Gene coordinate annotation
+
+Gene coordinates are manually curated from the NCBI Genome Browser for each species and assembly and explicitly defined inside the script.
 
 Example:
 
@@ -100,78 +99,52 @@ GENE_LOCS = {
   }
 }
 
-These coordinates are manually inspected and entered based on the corresponding NCBI reference assemblies.
+These coordinates are entered manually to ensure assembly-consistent annotation and are not inferred automatically.
 
-Outputs:
-High-resolution chromosome painting figures (PNG and PDF), suitable for publication.
+### Outputs
+
+High-resolution chromosome painting figures (PNG and PDF), suitable for direct inclusion in publication figures.
 
 ---
 
-## 3. Codon-Level Selection Visualization (FEL / MEME)
+## 3. Alignment-Aware Visualization of Codon-Level Selection Signals
 
-Selection inference itself is not performed in this repository. Instead, this repository visualizes results generated using established external tools.
+Script: gapmasked_alignment_fel_meme_plot.py
 
-External workflow:
+This script visualizes codon-aligned CDS regions across multiple species, integrating alignment gaps and externally inferred selection signals.
+
+The visualization maps selection signals onto an alignment-aware CDS framework and does not perform selection inference itself.
+
+### External workflow (performed outside this repository)
 
 1. Ortholog CDS retrieval  
-   Representative species are selected from NCBI Ortholog. CDS sequences are downloaded, and stop codons are removed.
+   Representative species are selected using NCBI Ortholog resources. CDS sequences are downloaded, and stop codons are removed.
 
 2. Codon-based alignment  
    Codon-based MUSCLE alignment is performed using MEGA12. The resulting alignment is exported as a FASTA file.
 
 3. Selection inference  
-   The codon alignment is uploaded to Datamonkey, and selection analyses are performed using HyPhy:
+   The codon alignment is uploaded to the Datamonkey web server, and selection analyses are performed using HyPhy:
    - FEL (Fixed Effects Likelihood)
    - MEME (Mixed Effects Model of Evolution)
 
-The resulting Excel (.xlsx) files are used as inputs for Python-based visualization.
+The resulting Excel files are used as inputs for visualization in this repository.
 
----
+### Inputs
 
-## 3a. FEL / MEME Codon-Level Plot
-
-Script: selection_sites_FEL_MEME.py
-
-Inputs:
+- Codon-based CDS alignment FASTA file (stop codons removed)
 - FEL result Excel file
 - MEME result Excel file
 
-Expected columns:
+### Outputs
 
-FEL:
-codon, p-value, class
-
-MEME:
-Codon, p-value, Class
-
-Outputs:
-selection_sites_FEL_MEME.png  
-selection_sites_FEL_MEME.pdf  
-
-This script produces Manhattan-style codon-level plots with capped −log10(p) values and optional highlighted positions.
-
----
-
-## 3b. Alignment-Aware Gap-Masked CDS Visualization
-
-Script: Figure_SEPTIN14_gapmasked_FEL_MEME.py
-
-This script visualizes codon-aligned CDS blocks with gap-masked regions, FEL purifying sites, and MEME episodic diversifying sites across multiple species.
-
-Inputs:
-- Codon-based alignment FASTA file (stop codons removed)
-- FEL result Excel file
-- MEME result Excel file
-
-Outputs:
-Figure_SEPTIN14_gapmasked_FEL_MEME.png  
-Figure_SEPTIN14_gapmasked_FEL_MEME.pdf  
+Gap-masked, alignment-aware figures summarizing codon-level selection signals across species, exported as PNG and PDF files.
 
 ---
 
 ## Dependencies
 
-Python dependencies required only for running the scripts in this repository:
+The following Python packages are required to run the scripts in this repository:
 
 numpy>=1.21  
 pandas>=1.4  
@@ -179,17 +152,24 @@ matplotlib>=3.5
 biopython>=1.79  
 openpyxl>=3.0  
 
-Install with:
+Install dependencies with:
+
 pip install -r requirements.txt
 
 ---
 
-## Notes on Reproducibility
+## Reproducibility and Interpretation Notes
 
-All Python scripts are deterministic given the same inputs. External tools (MEGA12 and Datamonkey/HyPhy) are explicitly documented but not bundled. No hidden preprocessing steps are performed. All coordinates, thresholds, and assumptions are visible in the code.
+- All analyses are based on UCSC chain/net projections.
+- No claim is made that projected blocks represent true insertion events.
+- Selection inference is performed externally; this repository is limited to visualization and structural interpretation.
+- All coordinates, parameters, and assumptions are explicitly defined in the scripts.
+
+This design ensures transparency and avoids over-interpretation of projection-based signals.
 
 ---
 
 ## License
 
-This code is provided for academic and research use. Please cite appropriately if reused in published work.
+This repository is provided for academic and research use.  
+If you use this code or figures in published work, please cite the corresponding Mobile DNA (2026) article.
