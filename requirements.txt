@@ -1,0 +1,5 @@
+numpy>=1.21
+pandas>=1.4
+matplotlib>=3.5
+biopython>=1.79
+openpyxl>=3.0
